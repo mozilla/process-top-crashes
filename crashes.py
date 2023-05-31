@@ -512,7 +512,7 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
       continue
   
     # symbolicate and return payload result
-    payload = symbolicate(props)
+    payload = symbolicate({ "normalized_os": operatingSystem, "payload": props })
     signature = generateSignature(payload)
 
     if skipProcessSignature(signature):
