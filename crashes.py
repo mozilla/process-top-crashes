@@ -1494,7 +1494,7 @@ def main():
       print("query id: %s" %  queryId)
     elif o == '-k':
       userKey = a
-      print("user key: (set)")
+      print("user key: ({}) [CLI]".format(len(userKey)))
     elif o == '-s':
       targetSignature = a
       print("target signature: %s" %  targetSignature)
@@ -1516,6 +1516,13 @@ def main():
       ReportLowerClientLimit = int(a)
       print("ReportLowerClientLimit: %d" % ReportLowerClientLimit)
 
+  if len(userKey) == 0:
+    userKey = os.getenv("REDASH_API_KEY")
+    if userKey:
+      print("user key: ({}) [ENV]".format(len(userKey)))
+    else:
+      print("No user key; use -k or REDASH_API_KEY")
+      exit()
 
   if ipcActor is not None:
     if ipcActor == "none":
