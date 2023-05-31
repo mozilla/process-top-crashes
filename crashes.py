@@ -45,6 +45,7 @@ from fx_crash_sig.crash_processor import CrashProcessor
 # -z            : debugging: load and dump the first few records of the local databases. requires -d.
 # -s (sig)      : search for a token in reports
 # -m            : Maintenance mode
+# -l (lower client limit) : set value for ReportLowerClientLimit, filtering out single client crashes (default 2)
 # python crashes.py -n nightly -d nightly -u https://sql.telemetry.mozilla.org -k (userapikey) -q 79354 -p process_type=gpu -p version=89 -p channel=nightly
 
 ## TODO
@@ -1466,7 +1467,7 @@ def main():
   cacheValue = MaxAge
   parameters = dict()
 
-  options, remainder = getopt.getopt(sys.argv[1:], 'c:u:n:d:c:k:q:p:s:zm')
+  options, remainder = getopt.getopt(sys.argv[1:], 'c:u:n:d:c:k:q:p:s:zml:')
   for o, a in options:
     if o == '-u':
       jsonUrl = a
@@ -1501,6 +1502,9 @@ def main():
       reports, stats = loadReports(dbFilename)
       dumpDatabase(reports)
       exit()
+    elif o == '-l':
+      ReportLowerClientLimit = int(a)
+      print("ReportLowerClientLimit: %d" % ReportLowerClientLimit)
 
   if len(userKey) == 0:
     print("missing user api key.")
