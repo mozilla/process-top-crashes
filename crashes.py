@@ -44,6 +44,7 @@ from fx_crash_sig.crash_processor import CrashProcessor
 # -p (k=v)      : k=v redash query parameters to pass to the query request.
 # -z            : debugging: load and dump the first few records of the local databases. requires -d.
 # -s (sig)      : search for a token in reports
+# -m            : Maintenance mode
 # python crashes.py -n nightly -d nightly -u https://sql.telemetry.mozilla.org -k (userapikey) -q 79354 -p process_type=gpu -p version=89 -p channel=nightly
 
 ## TODO
