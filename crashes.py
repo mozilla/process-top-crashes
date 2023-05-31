@@ -1485,7 +1485,7 @@ def main():
       print("query id: %s" %  queryId)
     elif o == '-k':
       userKey = a
-      print("user key: %s" %  userKey)
+      print("user key: (set)")
     elif o == '-s':
       targetSignature = a
       print("target signature: %s" %  targetSignature)
