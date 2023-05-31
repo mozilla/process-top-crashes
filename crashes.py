@@ -478,10 +478,11 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     startupCrash = int(recrow['startup_crash'])
     fissionEnabled = int(recrow['fission_enabled'])
 
-    lockdownVal = int(recrow['lockdown_enabled'])
     lockdownEnabled = False
-    if lockdownVal == 1:
-      lockdownEnabled = True
+    if recrow['lockdown_enabled']:
+      lockdownVal = int(recrow['lockdown_enabled'])
+      if lockdownVal == 1:
+        lockdownEnabled = True
 
     if crashReason != None:
       crashReason = crashReason.strip('\n')
