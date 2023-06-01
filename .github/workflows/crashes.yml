@@ -38,24 +38,19 @@ jobs:
         id: pages
         uses: actions/configure-pages@v3
 
-      - name: Download artifact
-        id: download-artifact
-        uses: dawidd6/action-download-artifact@v2
+      - name: Cache JSON database
+        id: cache-json-database
+        uses: actions/cache@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow_conclusion: success
-          name: json-data
-          if_no_artifact_found: warn
+          path: json-data.zip
+          key: json-database
 
       - name: Download bootstrap JSON from release if no artifact found
+        if: steps.cache-json-database.outputs.cache-hit != 'true'
         run: |
-          bootstrap_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/boostrap-json/json-data.zip
-          echo "Might bootstrap from ${bootstrap_url}"
-          if [ ! -f json-data.zip ]; then
-            curl -o json-data.zip --fail -sL ${bootstrap_url}
-          else
-            echo "No need to bootstrap"
-          fi
+          bootstrap_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/bootstrap-json/json-data.zip
+          echo "Do bootstrap from ${bootstrap_url}"
+          curl -o json-data.zip --fail -sL ${bootstrap_url}
 
       - name: Extract previous JSON
         run: unzip json-data.zip
