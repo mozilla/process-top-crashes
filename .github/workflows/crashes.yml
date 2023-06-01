@@ -1,0 +1,88 @@
+name: Update crashes informations from Telemetry
+
+on:
+  schedule:
+    # Run every 12 hours
+    - cron: '0 1,13 * * *'
+  push:
+    branches: ["main", "filter_utility_actors"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    env:
+      REDASH_API_KEY: ${{ secrets.REDASH_API_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install python-deps
+        run: |
+          pip3 install pygal requests fx-crash-sig
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v3
+
+      - name: Download artifact
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_conclusion: success
+          name: json-data
+          if_no_artifact_found: warn
+
+      - name: Extract JSON
+        run: (test -f json-data.zip && unzip json-data.zip) || echo "Do not extract, no zip was downloaded"
+
+      - name: Extract crash ping and generate web pages
+        run: python3 generate.py
+
+      - name: Collect JSON
+        run: zip -r9 json-data.zip *-reports.json *-stats.json
+
+      - name: Upload existing json reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: json-data
+          path: json-data.zip
+
+      - name: Collect web to dist/
+        run: |
+          mkdir -p dist/
+          mv *.html dist/
+          mv *.ico dist/
+          mv *.js dist/
+          mv *.css dist/
+
+      - name: Upload HTML artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./dist/
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
