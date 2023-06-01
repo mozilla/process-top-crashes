@@ -38,12 +38,15 @@ from fx_crash_sig.crash_processor import CrashProcessor
 # -k (str)      : redash user api key
 # -q (query id) : redash api query id
 # -c (value)    : redash cache value in minutes (0 is the default)
-# -n (name)     : local json cache filename to use (excluding extension)
-# -d (name)     : local html output filename to use (excluding extension)
+# -d (name)     : local json cache filename to use (excluding extension)
+# -n (name)     : local html output filename to use (excluding extension)
 # -c (count)    : number of reports to process, overrides the default
 # -p (k=v)      : k=v redash query parameters to pass to the query request.
 # -z            : debugging: load and dump the first few records of the local databases. requires -d.
 # -s (sig)      : search for a token in reports
+# -a (actor)    : IPC actor name to match for ; not passing it will not generate param in query. passing "none" will generate "IS NULL"
+# -m            : Maintenance mode
+# -l (lower client limit) : set value for ReportLowerClientLimit, filtering out single client crashes (default 2)
 # python crashes.py -n nightly -d nightly -u https://sql.telemetry.mozilla.org -k (userapikey) -q 79354 -p process_type=gpu -p version=89 -p channel=nightly
 
 ## TODO
@@ -70,7 +73,7 @@ from fx_crash_sig.crash_processor import CrashProcessor
 ###########################################################
 
 # The default symbolication server to use.
-SymbolServerUrl = "https://symbolication.stage.mozaws.net/symbolicate/v5"
+SymbolServerUrl = "https://symbolication.services.mozilla.com/symbolicate/v5"
 # Max stack depth for symbolication
 MaxStackDepth = 50
 # Maximum number of raw crashes to process. This matches
@@ -473,12 +476,16 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     crashInfo = props['stack_traces']['crash_info']
 
     startupCrash = int(recrow['startup_crash'])
-    fissionEnabled = int(recrow['fission_enabled'])
 
-    lockdownVal = int(recrow['lockdown_enabled'])
+    fissionEnabled = False
+    if recrow['fission_enabled']:
+      fissionEnabled = int(recrow['fission_enabled'])
+
     lockdownEnabled = False
-    if lockdownVal == 1:
-      lockdownEnabled = True
+    if recrow['lockdown_enabled']:
+      lockdownVal = int(recrow['lockdown_enabled'])
+      if lockdownVal == 1:
+        lockdownEnabled = True
 
     if crashReason != None:
       crashReason = crashReason.strip('\n')
@@ -512,7 +519,7 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
       continue
   
     # symbolicate and return payload result
-    payload = symbolicate(props)
+    payload = symbolicate({ "normalized_os": operatingSystem, "payload": props })
     signature = generateSignature(payload)
 
     if skipProcessSignature(signature):
@@ -1184,7 +1191,7 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
 
   return result.strip(' ,')
 
-def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType,
+def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor,
                            channel, queryFxVersion, outputFilename, annoFilename):
 
   templateFile = open("template.html", "r")
@@ -1438,6 +1445,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType,
                                                          # version=queryFxVersion,
                                                          process=processType,
                                                          sigcount=sigCount,
+                                                         ipcActor=ipcActor,
                                                          repcount=reportCount,
                                                          sparkline=sparklineJS,
                                                          signature=sigMetaHtml)
@@ -1464,8 +1472,9 @@ def main():
   annoFilename = "annotations"
   cacheValue = MaxAge
   parameters = dict()
+  ipcActor = None
 
-  options, remainder = getopt.getopt(sys.argv[1:], 'c:u:n:d:c:k:q:p:s:zm')
+  options, remainder = getopt.getopt(sys.argv[1:], 'c:u:n:d:c:k:q:p:a:s:zml:')
   for o, a in options:
     if o == '-u':
       jsonUrl = a
@@ -1485,7 +1494,7 @@ def main():
       print("query id: %s" %  queryId)
     elif o == '-k':
       userKey = a
-      print("user key: %s" %  userKey)
+      print("user key: ({}) [CLI]".format(len(userKey)))
     elif o == '-s':
       targetSignature = a
       print("target signature: %s" %  targetSignature)
@@ -1496,10 +1505,30 @@ def main():
     elif o == '-p':
       param = a.split('=')
       parameters[param[0]] = param[1]
+    elif o == '-a':
+      ipcActor = a
+      print("IPC actor: %s" % ipcActor)
     elif o == '-z':
       reports, stats = loadReports(dbFilename)
       dumpDatabase(reports)
       exit()
+    elif o == '-l':
+      ReportLowerClientLimit = int(a)
+      print("ReportLowerClientLimit: %d" % ReportLowerClientLimit)
+
+  if len(userKey) == 0:
+    userKey = os.getenv("REDASH_API_KEY")
+    if userKey:
+      print("user key: ({}) [ENV]".format(len(userKey)))
+    else:
+      print("No user key; use -k or REDASH_API_KEY")
+      exit()
+
+  if ipcActor is not None:
+    if ipcActor == "none":
+      parameters["utility_actor_name_op"] = "IS NULL"
+    else:
+      parameters["utility_actor_name_op"] = 'LIKE "%{}%"'.format(ipcActor)
 
   if len(userKey) == 0:
     print("missing user api key.")
@@ -1527,7 +1556,7 @@ def main():
   channel = parameters['channel']
   queryFxVersion = parameters['version']
 
-  generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, channel,
+  generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor, channel,
                          queryFxVersion, outputFilename, annoFilename)
 
   exit()
