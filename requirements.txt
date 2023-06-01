@@ -1,0 +1,15 @@
+attrs==23.1.0
+boltons==23.0.0
+certifi==2023.5.7
+charset-normalizer==3.1.0
+face==20.1.1
+fx-crash-sig==1.0.0
+glom==23.3.0
+idna==3.4
+importlib-metadata==6.6.0
+importlib-resources==5.12.0
+pygal==3.0.0
+requests==2.31.0
+siggen==1.1.20230418
+urllib3==2.0.2
+zipp==3.15.0
