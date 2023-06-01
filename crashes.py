@@ -476,7 +476,10 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     crashInfo = props['stack_traces']['crash_info']
 
     startupCrash = int(recrow['startup_crash'])
-    fissionEnabled = int(recrow['fission_enabled'])
+
+    fissionEnabled = False
+    if recrow['fission_enabled']:
+      fissionEnabled = int(recrow['fission_enabled'])
 
     lockdownEnabled = False
     if recrow['lockdown_enabled']:
