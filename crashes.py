@@ -38,8 +38,8 @@ from fx_crash_sig.crash_processor import CrashProcessor
 # -k (str)      : redash user api key
 # -q (query id) : redash api query id
 # -c (value)    : redash cache value in minutes (0 is the default)
-# -n (name)     : local json cache filename to use (excluding extension)
-# -d (name)     : local html output filename to use (excluding extension)
+# -d (name)     : local json cache filename to use (excluding extension)
+# -n (name)     : local html output filename to use (excluding extension)
 # -c (count)    : number of reports to process, overrides the default
 # -p (k=v)      : k=v redash query parameters to pass to the query request.
 # -z            : debugging: load and dump the first few records of the local databases. requires -d.
