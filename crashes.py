@@ -76,10 +76,6 @@ from fx_crash_sig.crash_processor import CrashProcessor
 SymbolServerUrl = "https://symbolication.services.mozilla.com/symbolicate/v5"
 # Max stack depth for symbolication
 MaxStackDepth = 50
-# Maximum number of raw crashes to process. This matches
-# the limit value of re:dash queries. Reduce for testing
-# purposes.
-CrashProcessMax = 7500
 # Signature list length of the resulting top crashes report
 MostCommonLength = 50
 # When generating a report, signatures with crash counts
@@ -412,7 +408,7 @@ def getDatasetStats(reports):
     reportCount += len(reports[hash]['reportList'])
   return sigCount, reportCount
 
-def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters):
+def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters, crashProcessMax):
   props = list()
   reports = dict()
 
@@ -436,13 +432,13 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     print("   done.")
 
   crashesToProcess = len(dataset["query_result"]["data"]["rows"])
-  if  crashesToProcess > CrashProcessMax:
-    crashesToProcess = CrashProcessMax
+  if  crashesToProcess > crashProcessMax:
+    crashesToProcess = crashProcessMax
 
   print('%04d total reports loaded.' % crashesToProcess)
 
   for recrow in dataset["query_result"]["data"]["rows"]:
-    if totals['processed'] >= CrashProcessMax:
+    if totals['processed'] >= crashProcessMax:
       break
 
     # pull some redash props out of the recrow. You can add these
@@ -1462,7 +1458,10 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
 ###########################################################
 
 def main():
-  global CrashProcessMax
+  # Maximum number of raw crashes to process. This matches
+  # the limit value of re:dash queries. Reduce for testing
+  # purposes.
+  CrashProcessMax = 7500
 
   queryId = ''
   userKey = ''
@@ -1547,7 +1546,7 @@ def main():
     exit()
 
   # Pull fresh data from redash and process it
-  reports, stats, totalCrashesProcessed = processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters)
+  reports, stats, totalCrashesProcessed = processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters, CrashProcessMax)
 
   # Caching of reports
   cacheReports(reports, stats, dbFilename)
