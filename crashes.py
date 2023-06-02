@@ -1188,7 +1188,7 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
   return result.strip(' ,')
 
 def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor,
-                           channel, queryFxVersion, outputFilename, annoFilename):
+                           channel, queryFxVersion, outputFilename, annoFilename, reportLowerClientLimit):
 
   templateFile = open("template.html", "r")
   template = templateFile.read()
@@ -1241,7 +1241,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
   # generate a top crash list
   sigCounter = Counter()
   for hash in reports:
-    if reports[hash]['clientcount'] < ReportLowerClientLimit:
+    if reports[hash]['clientcount'] < reportLowerClientLimit:
       continue
     sigCounter[hash] = len(reports[hash]['reportList'])
 
@@ -1556,7 +1556,7 @@ def main():
   queryFxVersion = parameters['version']
 
   generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor, channel,
-                         queryFxVersion, outputFilename, annoFilename)
+                         queryFxVersion, outputFilename, annoFilename, ReportLowerClientLimit)
 
   exit()
 
