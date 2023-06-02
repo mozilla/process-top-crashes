@@ -8,6 +8,8 @@ import os
 import sys
 import requests
 
+from datetime import datetime
+
 MAX_PROCESS = 8
 
 INDEX = """
@@ -27,6 +29,7 @@ INDEX = """
 </head>
 <body>
 {content}
+  <div class="processeddate">{processeddate}</div>Source code for this dashboard is <a href="https://github.com/mozilla/process-top-crashes">available on Github</a>.
 </body>
 </html>
 """
@@ -133,7 +136,7 @@ def generate():
     for worker in workers:
         worker.join()
 
-    index_html = INDEX.format(content="".join(all_idx))
+    index_html = INDEX.format(content="".join(all_idx), processeddate=datetime.now().isoformat())
     with open("_dist/index.html", "w") as index_file:
         index_file.write(index_html)
 
