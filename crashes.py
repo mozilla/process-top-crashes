@@ -1187,8 +1187,10 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
 
   return result.strip(' ,')
 
-def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor,
-                           channel, queryFxVersion, outputFilename, annoFilename, reportLowerClientLimit):
+def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, reportLowerClientLimit):
+  processType = parameters['process_type']
+  channel = parameters['channel']
+  queryFxVersion = parameters['version']
 
   templateFile = open("template.html", "r")
   template = templateFile.read()
@@ -1328,7 +1330,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
           pass
 
       # Redash meta data dump for a particular crash id
-      infoLink = 'https://sql.telemetry.mozilla.org/queries/79462?p_channel=%s&p_process_type=%s&p_version=%s&p_crash_id=%s' % (channel, processType, queryFxVersion, report['crashid'])
+      infoLink = "https://sql.telemetry.mozilla.org/queries/{query_id}?p_channel={channel}&p_process_type={process_type}&p_version={version}&p_crash_id={crash_id}".format(query_id=79462, channel=channel, process_type=processType, version=queryFxVersion, crash_id=report['crashid'])
 
       startupStyle = 'noicon'
       if report['startup'] != 0:
@@ -1551,12 +1553,7 @@ def main():
   # Caching of reports
   cacheReports(reports, stats, dbFilename)
 
-  processType = parameters['process_type']
-  channel = parameters['channel']
-  queryFxVersion = parameters['version']
-
-  generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor, channel,
-                         queryFxVersion, outputFilename, annoFilename, ReportLowerClientLimit)
+  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, ReportLowerClientLimit)
 
   exit()
 
