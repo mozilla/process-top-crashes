@@ -81,9 +81,6 @@ MostCommonLength = 50
 # When generating a report, signatures with crash counts
 # lower than this value will not be included in the report.
 MinCrashCount = 1
-# When generating a report, signatures with client counts
-# lower than this value will not be included in the report.
-ReportLowerClientLimit = 2 # filter out single client crashes
 # Maximum number of crash reports to include for each signature
 # in the final report. Limits the size of the resulting html.
 MaxReportCount = 100
@@ -1187,7 +1184,7 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
 
   return result.strip(' ,')
 
-def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, reportLowerClientLimit):
+def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ipcActorName, outputFilename, annoFilename, reportLowerClientLimit):
   processType = parameters['process_type']
   channel = parameters['channel']
   queryFxVersion = parameters['version']
@@ -1439,11 +1436,15 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ou
                                                              count=crashcount,
                                                              reports=sigHtml)
 
+  if ipcActorName:
+      ipcActorHdr = '<div class="header-elements">IPC Actor - {}</div>'.format(ipcActorName)
+  else:
+      ipcActorHdr = ""
   signatureHtml += Template(outerSigTemplate).substitute(channel=channel,
                                                          # version=queryFxVersion,
                                                          process=processType,
                                                          sigcount=sigCount,
-                                                         ipcActor=ipcActor,
+                                                         ipcActorHdr=ipcActorHdr,
                                                          repcount=reportCount,
                                                          sparkline=sparklineJS,
                                                          signature=sigMetaHtml)
@@ -1464,6 +1465,10 @@ def main():
   # the limit value of re:dash queries. Reduce for testing
   # purposes.
   CrashProcessMax = 7500
+
+  # When generating a report, signatures with client counts
+  # lower than this value will not be included in the report.
+  ReportLowerClientLimit = 2 # filter out single client crashes
 
   queryId = ''
   userKey = ''
@@ -1553,7 +1558,7 @@ def main():
   # Caching of reports
   cacheReports(reports, stats, dbFilename)
 
-  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, ReportLowerClientLimit)
+  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ipcActor, outputFilename, annoFilename, ReportLowerClientLimit)
 
   exit()
 

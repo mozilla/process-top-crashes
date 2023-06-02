@@ -5,7 +5,7 @@ on:
     # Run every 12 hours
     - cron: '0 1,13 * * *'
   push:
-    branches: ["main", "filter_utility_actors"]
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -43,10 +43,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: json-data.zip
-          key: json-database
+          key: json-database-${{ github.run_id }}
+          restore-keys: json-database
 
       - name: Download bootstrap JSON from release if no artifact found
-        if: steps.cache-json-database.outputs.cache-hit != 'true'
+        if: steps.cache-json-database.outputs.cache-hit == 'false' && steps.cache-json-database.outputs.cache-matched-key == 'false'
         run: |
           bootstrap_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/bootstrap-json/json-data.zip
           echo "Do bootstrap from ${bootstrap_url}"
