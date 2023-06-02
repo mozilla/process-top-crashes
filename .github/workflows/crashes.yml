@@ -47,7 +47,7 @@ jobs:
           restore-keys: json-database
 
       - name: Download bootstrap JSON from release if no artifact found
-        if: steps.cache-json-database.outputs.cache-hit == 'false' && steps.cache-json-database.outputs.cache-matched-key == 'false'
+        if: ${{ !steps.cache-json-database.outputs.cache-hit || steps.cache-json-database.outputs.cache-primary-key != steps.cache-json-database.outputs.cache-matched-key }}
         run: |
           bootstrap_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/bootstrap-json/json-data.zip
           echo "Do bootstrap from ${bootstrap_url}"
