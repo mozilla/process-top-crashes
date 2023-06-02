@@ -81,9 +81,6 @@ MostCommonLength = 50
 # When generating a report, signatures with crash counts
 # lower than this value will not be included in the report.
 MinCrashCount = 1
-# When generating a report, signatures with client counts
-# lower than this value will not be included in the report.
-ReportLowerClientLimit = 2 # filter out single client crashes
 # Maximum number of crash reports to include for each signature
 # in the final report. Limits the size of the resulting html.
 MaxReportCount = 100
@@ -1464,6 +1461,10 @@ def main():
   # the limit value of re:dash queries. Reduce for testing
   # purposes.
   CrashProcessMax = 7500
+
+  # When generating a report, signatures with client counts
+  # lower than this value will not be included in the report.
+  ReportLowerClientLimit = 2 # filter out single client crashes
 
   queryId = ''
   userKey = ''
