@@ -1447,7 +1447,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
                                                          signature=sigMetaHtml)
 
   # Add processed date to the footer
-  dateTime = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+  dateTime = datetime.now().isoformat()
   resultFile.write(Template(mainPage).substitute(main=signatureHtml,
                                                  annotations=annotationsHtml,
                                                  processeddate=dateTime))
