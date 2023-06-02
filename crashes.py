@@ -76,10 +76,6 @@ from fx_crash_sig.crash_processor import CrashProcessor
 SymbolServerUrl = "https://symbolication.services.mozilla.com/symbolicate/v5"
 # Max stack depth for symbolication
 MaxStackDepth = 50
-# Maximum number of raw crashes to process. This matches
-# the limit value of re:dash queries. Reduce for testing
-# purposes.
-CrashProcessMax = 7500
 # Signature list length of the resulting top crashes report
 MostCommonLength = 50
 # When generating a report, signatures with crash counts
@@ -412,7 +408,7 @@ def getDatasetStats(reports):
     reportCount += len(reports[hash]['reportList'])
   return sigCount, reportCount
 
-def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters):
+def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters, crashProcessMax):
   props = list()
   reports = dict()
 
@@ -436,13 +432,13 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     print("   done.")
 
   crashesToProcess = len(dataset["query_result"]["data"]["rows"])
-  if  crashesToProcess > CrashProcessMax:
-    crashesToProcess = CrashProcessMax
+  if  crashesToProcess > crashProcessMax:
+    crashesToProcess = crashProcessMax
 
   print('%04d total reports loaded.' % crashesToProcess)
 
   for recrow in dataset["query_result"]["data"]["rows"]:
-    if totals['processed'] >= CrashProcessMax:
+    if totals['processed'] >= crashProcessMax:
       break
 
     # pull some redash props out of the recrow. You can add these
@@ -1191,8 +1187,10 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
 
   return result.strip(' ,')
 
-def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor,
-                           channel, queryFxVersion, outputFilename, annoFilename):
+def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, reportLowerClientLimit):
+  processType = parameters['process_type']
+  channel = parameters['channel']
+  queryFxVersion = parameters['version']
 
   templateFile = open("template.html", "r")
   template = templateFile.read()
@@ -1245,7 +1243,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
   # generate a top crash list
   sigCounter = Counter()
   for hash in reports:
-    if reports[hash]['clientcount'] < ReportLowerClientLimit:
+    if reports[hash]['clientcount'] < reportLowerClientLimit:
       continue
     sigCounter[hash] = len(reports[hash]['reportList'])
 
@@ -1332,7 +1330,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
           pass
 
       # Redash meta data dump for a particular crash id
-      infoLink = 'https://sql.telemetry.mozilla.org/queries/79462?p_channel=%s&p_process_type=%s&p_version=%s&p_crash_id=%s' % (channel, processType, queryFxVersion, report['crashid'])
+      infoLink = "https://sql.telemetry.mozilla.org/queries/{query_id}?p_channel={channel}&p_process_type={process_type}&p_version={version}&p_crash_id={crash_id}".format(query_id=79462, channel=channel, process_type=processType, version=queryFxVersion, crash_id=report['crashid'])
 
       startupStyle = 'noicon'
       if report['startup'] != 0:
@@ -1451,7 +1449,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
                                                          signature=sigMetaHtml)
 
   # Add processed date to the footer
-  dateTime = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+  dateTime = datetime.now().isoformat()
   resultFile.write(Template(mainPage).substitute(main=signatureHtml,
                                                  annotations=annotationsHtml,
                                                  processeddate=dateTime))
@@ -1462,7 +1460,10 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, i
 ###########################################################
 
 def main():
-  global CrashProcessMax
+  # Maximum number of raw crashes to process. This matches
+  # the limit value of re:dash queries. Reduce for testing
+  # purposes.
+  CrashProcessMax = 7500
 
   queryId = ''
   userKey = ''
@@ -1547,17 +1548,12 @@ def main():
     exit()
 
   # Pull fresh data from redash and process it
-  reports, stats, totalCrashesProcessed = processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters)
+  reports, stats, totalCrashesProcessed = processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, parameters, CrashProcessMax)
 
   # Caching of reports
   cacheReports(reports, stats, dbFilename)
 
-  processType = parameters['process_type']
-  channel = parameters['channel']
-  queryFxVersion = parameters['version']
-
-  generateTopCrashReport(reports, stats, totalCrashesProcessed, processType, ipcActor, channel,
-                         queryFxVersion, outputFilename, annoFilename)
+  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, ReportLowerClientLimit)
 
   exit()
 
