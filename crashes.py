@@ -1184,7 +1184,7 @@ def getPrettyFirefoxVersionList(statsCrashData, channel):
 
   return result.strip(' ,')
 
-def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, reportLowerClientLimit):
+def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ipcActorName, outputFilename, annoFilename, reportLowerClientLimit):
   processType = parameters['process_type']
   channel = parameters['channel']
   queryFxVersion = parameters['version']
@@ -1436,11 +1436,15 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ou
                                                              count=crashcount,
                                                              reports=sigHtml)
 
+  if ipcActorName:
+      ipcActorHdr = '<div class="header-elements">IPC Actor - {}</div>'.format(ipcActorName)
+  else:
+      ipcActorHdr = ""
   signatureHtml += Template(outerSigTemplate).substitute(channel=channel,
                                                          # version=queryFxVersion,
                                                          process=processType,
                                                          sigcount=sigCount,
-                                                         ipcActor=ipcActor,
+                                                         ipcActorHdr=ipcActorHdr,
                                                          repcount=reportCount,
                                                          sparkline=sparklineJS,
                                                          signature=sigMetaHtml)
@@ -1554,7 +1558,7 @@ def main():
   # Caching of reports
   cacheReports(reports, stats, dbFilename)
 
-  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, outputFilename, annoFilename, ReportLowerClientLimit)
+  generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ipcActor, outputFilename, annoFilename, ReportLowerClientLimit)
 
   exit()
 
