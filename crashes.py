@@ -1441,7 +1441,7 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ip
   else:
       ipcActorHdr = ""
   signatureHtml += Template(outerSigTemplate).substitute(channel=channel,
-                                                         # version=queryFxVersion,
+                                                         version=queryFxVersion,
                                                          process=processType,
                                                          sigcount=sigCount,
                                                          ipcActorHdr=ipcActorHdr,
