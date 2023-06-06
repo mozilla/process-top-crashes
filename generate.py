@@ -8,9 +8,9 @@ import os
 import sys
 import requests
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
-MAX_PROCESS = 8
+MAX_PROCESS = 16
 
 INDEX = """
 <!DOCTYPE html>
@@ -95,19 +95,36 @@ def fn_worker(q):
         else:
             sp.check_call(cmd.split(" "), shell=False)
 
+def maybe_correct_version(now_date, chan, version_field, json_req):
+    date_string = json_req[chan]
+    if len(date_string) == 25:
+        chan_date = datetime.fromisoformat(date_string)
+    elif len(date_string) == 10:
+        chan_date = datetime.strptime(date_string, "%Y-%m-%d").astimezone(timezone.utc)
+    else:
+        raise ValueError("Unexpected date string length: {}".format(len(date_string)))
+    version = int(json_req[version_field].split('.')[0])
+    diff = now_date - chan_date
+    if diff < timedelta(days=2):
+        version -= 1
+        print("[{chan}] Detected {diff} time difference, fallback to {ver}".format(chan=chan, diff=diff, ver=version))
+    return version
+
 def get_versions():
     rv = {}
-    for chan in ["nightly", "beta"]:
+    now_date = datetime.now(timezone.utc)
+    for (chan, chan_date) in [("nightly", "nightly_start"), ("beta", "beta_1")]:
         base_url = "https://whattrainisitnow.com/api/release/schedule/?version={}".format(chan)
         req = requests.get(base_url)
         if not req.ok:
             raise IndexError
-        rv[chan] = int(req.json()['version'].split('.')[0])
+        rv[chan] = maybe_correct_version(now_date, chan_date, "version", req.json())
 
     req = requests.get("https://product-details.mozilla.org/1.0/firefox_versions.json")
     if not req.ok:
         raise IndexError
-    rv["release"] = int(req.json()['LATEST_FIREFOX_VERSION'].split('.')[0])
+    rv["release"] = maybe_correct_version(now_date, "LAST_RELEASE_DATE", "LATEST_FIREFOX_VERSION", req.json())
+
     return rv
 
 def generate():
