@@ -79,6 +79,15 @@
     },
     {
         "process_name": "utility",
+        "nice_name": "Utility (MF Media Engine) Process",
+        "channels": [ "nightly", "beta", "release" ],
+        "redash": "92348",
+        "redash_params": [ ],
+        "lower_client_limit": "1",
+        "ipc_actor": "mf-media-engine"
+    },
+    {
+        "process_name": "utility",
         "nice_name": "Utility (JS Oracle) Process",
         "channels": [ "nightly", "beta", "release" ],
         "redash": "92348",
