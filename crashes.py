@@ -637,9 +637,6 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
   print('%04d - reports skipped, bad signature' % totals['skippedBadSig'])
   print('%04d - reports skipped, out dated' % totals['outdated'])
 
-  if totals['processed'] == 0:
-    exit()
-
   # Post processing steps
 
   # Purge signatures from our reports list that are outdated (based
