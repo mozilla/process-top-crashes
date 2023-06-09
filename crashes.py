@@ -1448,8 +1448,12 @@ def generateTopCrashReport(reports, stats, totalCrashesProcessed, parameters, ip
 
   # Add processed date to the footer
   dateTime = datetime.now().isoformat()
+  processHead = "{}".format(processType.capitalize())
+  if ipcActorName:
+      processHead += " ({})".format(ipcActorName)
   resultFile.write(Template(mainPage).substitute(main=signatureHtml,
                                                  annotations=annotationsHtml,
+                                                 process=processHead,
                                                  processeddate=dateTime))
   resultFile.close()
 
