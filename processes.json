@@ -103,5 +103,14 @@
         "redash_params": [ ],
         "lower_client_limit": "1",
         "ipc_actor": "windows-utils"
+    },
+    {
+        "process_name": "utility",
+        "nice_name": "Utility (Windows File Dialog) Process",
+        "channels": [ "nightly", "beta", "release" ],
+        "redash": "92348",
+        "redash_params": [ ],
+        "lower_client_limit": "1",
+        "ipc_actor": "windows-file-dialog"
     }
 ]
