@@ -468,7 +468,9 @@ def processRedashDataset(dbFilename, jsonUrl, queryId, userKey, cacheValue, para
     crashReason = props['metadata']['moz_crash_reason']
     crashInfo = props['stack_traces']['crash_info']
 
-    startupCrash = int(recrow['startup_crash'])
+    startupCrash = False
+    if recrow['startup_crash']:
+      startupCrash = int(recrow['startup_crash'])
 
     fissionEnabled = False
     if recrow['fission_enabled']:
