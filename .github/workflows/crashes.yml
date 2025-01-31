@@ -1,4 +1,4 @@
-name: Update crashes informations from Telemetry
+name: Update crashes informations from Legacy Telemetry
 
 on:
   schedule:
