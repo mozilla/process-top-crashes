@@ -62,7 +62,7 @@ jobs:
         run: zip -r9 json-data.zip *-reports.json *-stats.json
 
       - name: Upload existing json reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: json-data
           path: json-data.zip
